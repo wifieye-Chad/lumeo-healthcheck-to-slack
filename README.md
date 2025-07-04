@@ -9,6 +9,7 @@ bash install.sh
 ============================================================================================
 
 Lumeo Gateway Health Monitor via Slack
+
 This system monitors GPU health on Lumeo AI inference gateways and integrates with Slack for actionable alerts and remote control.
 
 What It Does
