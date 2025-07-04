@@ -1,6 +1,8 @@
 #!/bin/bash
 
-SLACK_WEBHOOK_URL="https://hooks.slack.com/services/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"
+# Load secrets
+source /usr/local/etc/lumeo-slack.env
+
 HOSTNAME=$(hostname)
 TS=$(date "+%Y-%m-%d %H:%M:%S")
 
