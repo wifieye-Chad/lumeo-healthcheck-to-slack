@@ -1,7 +1,8 @@
 #!/bin/bash
 
-SLACK_BOT_TOKEN="xoxb-9150442773234-9143688969587-WE4Aa0X9Qpqf2U6EjkreX7ej"
-CHANNEL_NAME="gateway-alerts"
+# Load secrets
+source /usr/local/etc/lumeo-slack.env
+
 STATE_FILE="/var/log/lumeo_action_state.json"
 HOSTNAME=$(hostname)
 
@@ -9,7 +10,7 @@ command -v jq >/dev/null || { echo "jq is required but not installed."; exit 1; 
 
 CHANNEL_ID=$(curl -s -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
 "https://slack.com/api/conversations.list?exclude_archived=true&types=public_channel,private_channel" \
-| jq -r ".channels[] | select(.name==\"$CHANNEL_NAME\") | .id" | head -n1)
+| jq -r ".channels[] | select(.name==\"$SLACK_CHANNEL_NAME\") | .id" | head -n1)
 
 [ -z "$CHANNEL_ID" ] && echo "❌ Could not find Slack channel ID." && exit 1
 
@@ -62,3 +63,4 @@ for ts in $(echo "$MESSAGES" | jq -r --arg HOST "$HOSTNAME" '.messages[] | selec
     echo "$ts" >> "$STATE_FILE"
   done
 done
+
