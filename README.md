@@ -4,7 +4,7 @@ git clone https://github.com/wifieye-Chad/lumeo-healthcheck-to-slack.git
 cd lumeo-healthcheck-to-slack
 bash install.sh
 
-
+===========================================================================================================================
 Lumeo Gateway Health Monitor via Slack
 This system monitors GPU health on Lumeo AI inference gateways and integrates with Slack for actionable alerts and remote control.
 
