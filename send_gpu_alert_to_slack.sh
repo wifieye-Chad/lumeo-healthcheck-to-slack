@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Load secrets
+# Load environment variables
 source /usr/local/etc/lumeo-slack.env
 
 HOSTNAME=$(hostname)
@@ -23,13 +23,28 @@ for i in $(nvidia-smi -L | nl -v 0 | awk '{print $1}'); do
 
   ALERT=0
   REASON=""
+
   [[ "$util" =~ ^[0-9]+$ ]] && [ "$util" -ge 80 ] && { ALERT=1; REASON="Utilization >= 80%"; }
   [[ "$temp" =~ ^[0-9]+$ ]] && [ "$temp" -ge 85 ] && { ALERT=1; REASON="Temperature >= 85C"; }
   [[ "$mempct" =~ ^[0-9]+$ ]] && [ "$mempct" -ge 90 ] && { ALERT=1; REASON="VRAM Usage >= 90%"; }
   [[ "$fps" =~ ^[0-9]+$ ]] && [[ "$util" =~ ^[0-9]+$ ]] && [ "$fps" -le 3 ] && [ "$util" -ge 65 ] && { ALERT=1; REASON="Low FPS <= 3 with Util >= 65%"; }
+  [[ "$util" =~ ^[0-9]+$ ]] && [ "$util" -le 5 ] && { ALERT=1; REASON="GPU Utilization <= 5%"; }
+  CPU_USE=$(top -bn1 | awk '/Cpu\(s\)/ {print 100 - $8}' | cut -d. -f1)
+  [[ "$CPU_USE" =~ ^[0-9]+$ ]] && [ "$CPU_USE" -le 5 ] && { ALERT=1; REASON="CPU Usage <= 5%"; }
 
   if [ $ALERT -eq 1 ]; then
-    TEXT="🚨 *GPU Alert* on \`$HOSTNAME\` (GPU$i)\n• Util: ${util}%\n• Temp: ${temp}°C\n• FPS: ${fps}\n• VRAM: ${mempct}%\n• Time: $TS\n*Reason*: $REASON\n\n🧠 *Reply in thread with* \`restart\` *(restarts lumeo container) or* \`reboot\` *(reboots the whole gateway)*"
+    read -r -d '' TEXT <<EOF
+🚨 *GPU Alert* on \`$HOSTNAME\` (GPU$i)
+• Util: ${util}%
+• Temp: ${temp}°C
+• FPS: ${fps}
+• VRAM: ${mempct}%
+• CPU: ${CPU_USE}%
+• Time: $TS
+*Reason*: $REASON
+
+🧠 *Reply in thread with* \`restart\` *(restarts lumeo container) or* \`reboot\` *(reboots the whole gateway)*
+EOF
 
     PAYLOAD=$(jq -nc --arg text "$TEXT" '{
       blocks: [
