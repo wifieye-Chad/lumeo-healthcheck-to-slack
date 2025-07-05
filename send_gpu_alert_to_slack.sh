@@ -1,6 +1,8 @@
 #!/bin/bash
 
-WEBHOOK_URL="https://hooks.slack.com/services/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"
+SLACK_WEBHOOK_URL="https://hooks.slack.com/services/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"
+GATEWAY_ID="f925774a-0fa4-423b-a269-47d7a7061ec5"
+LUMEO_URL="https://console.lumeo.com/login"
 HOSTNAME=$(hostname)
 TS=$(date "+%Y-%m-%d %H:%M:%S")
 
@@ -19,6 +21,8 @@ for i in $(nvidia-smi -L | nl -v 0 | awk '{print $1}'); do
     mempct=0
   fi
 
+  CPU_USE=$(top -bn1 | awk '/Cpu\(s\)/ {print 100 - $8}' | cut -d. -f1)
+
   ALERT=0
   REASON=""
 
@@ -26,16 +30,42 @@ for i in $(nvidia-smi -L | nl -v 0 | awk '{print $1}'); do
   [[ "$temp" =~ ^[0-9]+$ ]] && [ "$temp" -ge 85 ] && { ALERT=1; REASON="Temperature >= 85C"; }
   [[ "$mempct" =~ ^[0-9]+$ ]] && [ "$mempct" -ge 90 ] && { ALERT=1; REASON="VRAM Usage >= 90%"; }
   [[ "$fps" =~ ^[0-9]+$ ]] && [[ "$util" =~ ^[0-9]+$ ]] && [ "$fps" -le 3 ] && [ "$util" -ge 65 ] && { ALERT=1; REASON="Low FPS <= 3 with Util >= 65%"; }
-  [[ "$util" =~ ^[0-9]+$ ]] && [ "$util" -le 5 ] && { ALERT=1; REASON="GPU Utilization <= 5%"; }
 
-  CPU_USE=$(top -bn1 | awk '/Cpu\(s\)/ {print 100 - $8}' | cut -d. -f1)
+  [[ "$util" =~ ^[0-9]+$ ]] && [ "$util" -le 5 ] && { ALERT=1; REASON="GPU Utilization <= 5%"; }
   [[ "$CPU_USE" =~ ^[0-9]+$ ]] && [ "$CPU_USE" -le 5 ] && { ALERT=1; REASON="CPU Usage <= 5%"; }
 
-  if [ $ALERT -eq 1 ]; then
-    TEXT="ALERT on $HOSTNAME (GPU$i)\nUtil: ${util}%\nTemp: ${temp}°C\nFPS: ${fps}\nVRAM: ${mempct}%\nCPU: ${CPU_USE}%\nTime: $TS\nReason: $REASON"
+  if [ "$ALERT" -eq 1 ]; then
+    TEXT="🚨 *GPU Alert* on \`$HOSTNAME\` (GPU$i)\n• Util: ${util}%\n• Temp: ${temp}°C\n• FPS: ${fps}\n• VRAM: ${mempct}%\n• CPU: ${CPU_USE}%\n• Time: $TS\n*Reason*: $REASON"
+
+    read -r -d '' PAYLOAD << EOM
+{
+  "blocks": [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "$TEXT"
+      }
+    },
+    {
+      "type": "actions",
+      "elements": [
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Open Lumeo Console"
+          },
+          "url": "$LUMEO_URL"
+        }
+      ]
+    }
+  ]
+}
+EOM
 
     curl -s -X POST -H 'Content-type: application/json' \
-      --data "{\"text\": \"$TEXT\"}" \
-      "$WEBHOOK_URL"
+      --data "$PAYLOAD" \
+      "$SLACK_WEBHOOK_URL"
   fi
 done
