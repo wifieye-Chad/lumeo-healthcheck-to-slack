@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# Hardcoded Slack Webhook URL
-WEBHOOK_URL="https://hooks.slack.com/services/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"
-
+WEBHOOK_URL="https://hooks.slack.com/services/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"
 HOSTNAME=$(hostname)
 TS=$(date "+%Y-%m-%d %H:%M:%S")
 
@@ -34,20 +32,10 @@ for i in $(nvidia-smi -L | nl -v 0 | awk '{print $1}'); do
   [[ "$CPU_USE" =~ ^[0-9]+$ ]] && [ "$CPU_USE" -le 5 ] && { ALERT=1; REASON="CPU Usage <= 5%"; }
 
   if [ $ALERT -eq 1 ]; then
-    TEXT="🚨 GPU Alert on \`$HOSTNAME\` (GPU$i)
-• Util: ${util}%
-• Temp: ${temp}°C
-• FPS: ${fps}
-• VRAM: ${mempct}%
-• CPU: ${CPU_USE}%
-• Time: $TS
-*Reason*: $REASON
-
-🧠 Reply in thread with \`restart\` (restarts lumeo container) or \`reboot\` (reboots the whole gateway)
-"
+    TEXT="ALERT on $HOSTNAME (GPU$i)\nUtil: ${util}%\nTemp: ${temp}°C\nFPS: ${fps}\nVRAM: ${mempct}%\nCPU: ${CPU_USE}%\nTime: $TS\nReason: $REASON"
 
     curl -s -X POST -H 'Content-type: application/json' \
-      --data "$(jq -nc --arg text "$TEXT" '{text: $text}')" \
+      --data "{\"text\": \"$TEXT\"}" \
       "$WEBHOOK_URL"
   fi
 done
