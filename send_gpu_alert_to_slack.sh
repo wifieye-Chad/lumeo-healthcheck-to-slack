@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Load environment variables
-source /usr/local/etc/lumeo-slack.env
+# Hardcoded Slack Webhook URL
+WEBHOOK_URL="https://hooks.slack.com/services/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"
 
 HOSTNAME=$(hostname)
 TS=$(date "+%Y-%m-%d %H:%M:%S")
@@ -48,6 +48,6 @@ for i in $(nvidia-smi -L | nl -v 0 | awk '{print $1}'); do
 
     curl -s -X POST -H 'Content-type: application/json' \
       --data "$(jq -nc --arg text "$TEXT" '{text: $text}')" \
-      "$SLACK_WEBHOOK_URL"
+      "$WEBHOOK_URL"
   fi
 done
